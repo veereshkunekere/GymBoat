@@ -21,6 +21,12 @@ import {
   createTestMembership,
 } from "../setup/testData.js";
 
+import Membership from "../../src/models/Membership.js";
+
+import {
+  reconcileMembershipStatuses,
+} from "../../src/jobs/membershipExpiry.job.js";
+
 before(async () => {
   await startTestDatabase();
 });
@@ -32,6 +38,58 @@ beforeEach(async () => {
 after(async () => {
   await stopTestDatabase();
 });
+
+// Get today's date in Asia/Kolkata and apply an offset.
+const getIndiaDate = (offsetDays = 0) => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value])
+  );
+
+  return new Date(
+    Date.UTC(
+      Number(values.year),
+      Number(values.month) - 1,
+      Number(values.day) + offsetDays
+    )
+  );
+};
+
+// Create a membership with controlled dates and status.
+const createExpiryTestMembership = async ({
+  status = "ACTIVE",
+  startOffset = -10,
+  endOffset = -1,
+} = {}) => {
+  const { agent } = await createTestOwner();
+  const { member } = await createTestMember(agent);
+  const { plan } = await createTestPlan(agent);
+
+  const { membership } = await createTestMembership(
+    agent,
+    member._id,
+    plan._id
+  );
+
+  await Membership.updateOne(
+    { _id: membership._id },
+    {
+      $set: {
+        status,
+        startDate: getIndiaDate(startOffset),
+        endDate: getIndiaDate(endOffset),
+      },
+    }
+  );
+
+  return membership._id;
+};
 
 test("should assign a membership with the correct initial balance", async () => {
   const { agent } = await createTestOwner();
@@ -347,3 +405,122 @@ test("should prevent overlapping memberships for the same member", async () => {
 
   console.log("[PASS] Overlapping membership prevention");
 });
+
+
+test("should automatically expire membership after its end date", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "ACTIVE",
+    endOffset: -1,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.expired, 1);
+  assert.equal(membership.status, "EXPIRED");
+
+  console.log("[PASS] Automatic membership expiry");
+});
+
+test("should keep membership active throughout its end date", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "ACTIVE",
+    endOffset: 0,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.expired, 0);
+  assert.equal(membership.status, "ACTIVE");
+
+  console.log("[PASS] Membership valid on end date");
+});
+
+test("should keep membership active when its end date is tomorrow", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "ACTIVE",
+    endOffset: 1,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.expired, 0);
+  assert.equal(membership.status, "ACTIVE");
+
+  console.log("[PASS] Future membership remains active");
+});
+
+test("should not repeatedly expire an already expired membership", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "EXPIRED",
+    endOffset: -2,
+  });
+
+  const firstRun = await reconcileMembershipStatuses();
+  const secondRun = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(firstRun.expired, 0);
+  assert.equal(secondRun.expired, 0);
+  assert.equal(membership.status, "EXPIRED");
+
+  console.log("[PASS] Expiry job is idempotent");
+});
+
+test("should not automatically expire paused memberships", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "PAUSED",
+    endOffset: -5,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.expired, 0);
+  assert.equal(membership.status, "PAUSED");
+
+  console.log("[PASS] Paused membership protected from expiry");
+});
+
+test("should activate an upcoming membership when its start date arrives", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "UPCOMING",
+    startOffset: 0,
+    endOffset: 10,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.activated, 1);
+  assert.equal(membership.status, "ACTIVE");
+
+  console.log("[PASS] Automatic membership activation");
+});
+
+test("should keep upcoming membership unchanged before its start date", async () => {
+  const membershipId = await createExpiryTestMembership({
+    status: "UPCOMING",
+    startOffset: 1,
+    endOffset: 10,
+  });
+
+  const result = await reconcileMembershipStatuses();
+
+  const membership = await Membership.findById(membershipId);
+
+  assert.equal(result.activated, 0);
+  assert.equal(membership.status, "UPCOMING");
+
+  console.log("[PASS] Future membership remains upcoming");
+});
+
+

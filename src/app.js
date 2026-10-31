@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 
 import { env } from "./config/env.js";
 import corsMiddleware from "./config/cors.js";
-
+import csrfProtection from "./middleware/csrf.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import memberRoutes from "./modules/members/member.routes.js";
@@ -25,7 +25,7 @@ const app = express();
 // Security
 app.use(helmet());
 
-// CORS
+app.use(csrfProtection);
 app.use(corsMiddleware);
 
 // Request parsing
@@ -49,7 +49,7 @@ app.use(`${API_V1}/plans`, planRoutes);
 app.use(`${API_V1}/payments`, paymentRoutes);
 app.use(`${API_V1}/imports`, importRoutes);
 app.use(`${API_V1}/reports`, reportRoutes);
-
+app.use(`${API_V1}/dashboard`, dashboardRoutes);
 // Root endpoint
 app.get("/api", (req, res) => {
   res.json({

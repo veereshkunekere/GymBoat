@@ -6,7 +6,7 @@ import {
 } from "./auth.service.js";
 
 import { env } from "../../config/env.js";
-
+import jwt from "jsonwebtoken";
 const cookieOptions = {
   httpOnly: true,
   secure: env.COOKIE_SECURE,
@@ -15,9 +15,20 @@ const cookieOptions = {
 };
 
 const setAuthCookie = (res, token) => {
+  const decodedToken = jwt.decode(token);
+
+  if (!decodedToken?.exp) {
+    throw new Error("Authentication token is missing expiration");
+  }
+
+  const maxAge = Math.max(
+    0,
+    decodedToken.exp * 1000 - Date.now()
+  );
+
   res.cookie(env.JWT_COOKIE_NAME, token, {
     ...cookieOptions,
-    maxAge: 24 * 60 * 60 * 1000
+    maxAge
   });
 };
 

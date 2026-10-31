@@ -16,9 +16,10 @@ const authenticateOwner = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, env.JWT_SECRET, {
-      issuer: "sweatboat-api",
-      audience: "sweatboat-web"
-    });
+  algorithms: ["HS256"],
+  issuer: "sweatboat-api",
+  audience: "sweatboat-web"
+});
 
     if (!decoded.sub) {
       return res.status(401).json({
