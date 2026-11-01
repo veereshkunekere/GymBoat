@@ -8,6 +8,11 @@ const authenticateOwner = async (req, res, next) => {
   try {
     const token = req.cookies?.[env.JWT_COOKIE_NAME];
 
+console.log("AUTH DEBUG:", {
+  cookieName: env.JWT_COOKIE_NAME,
+  cookiesReceived: Object.keys(req.cookies || {}),
+  tokenReceived: Boolean(token),
+});
     if (!token) {
       return res.status(401).json({
         success: false,
