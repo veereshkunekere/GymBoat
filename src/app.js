@@ -22,6 +22,7 @@ import {
 
 const app = express();
 
+app.set("trust proxy", 1); // Trust first proxy for secure cookies
 // Security
 app.use(helmet());
 
@@ -49,7 +50,6 @@ app.use(`${API_V1}/plans`, planRoutes);
 app.use(`${API_V1}/payments`, paymentRoutes);
 app.use(`${API_V1}/imports`, importRoutes);
 app.use(`${API_V1}/reports`, reportRoutes);
-app.use(`${API_V1}/dashboard`, dashboardRoutes);
 // Root endpoint
 app.get("/api", (req, res) => {
   res.json({
