@@ -46,18 +46,20 @@ console.log("AUTH DEBUG:", {
 
     next();
   } catch (error) {
-    if (
-      error.name === "JsonWebTokenError" ||
-      error.name === "TokenExpiredError"
-    ) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired authentication token"
-      });
-    }
+  console.error("AUTH ERROR:", error.name, error.message);
 
-    next(error);
+  if (
+    error.name === "JsonWebTokenError" ||
+    error.name === "TokenExpiredError"
+  ) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired authentication token"
+    });
   }
+
+  next(error);
+}
 };
 
 export default authenticateOwner;
