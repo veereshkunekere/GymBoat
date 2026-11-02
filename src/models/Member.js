@@ -51,6 +51,14 @@ const memberSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  whatsappOptIn: {
+    type: Boolean,
+    default: false,
+  },
+  whatsappConsentAt: {
+    type: Date,
+    default: null,
+  },
   membershipLockVersion: {
   type: Number,
   default: 0,

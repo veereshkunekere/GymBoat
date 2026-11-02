@@ -1,0 +1,10 @@
+import { Router } from "express";
+import auth from "../../middleware/auth.middleware.js";
+import * as controller from "./whatsapp.controller.js";
+const router = Router();
+router.use(auth);
+router.get("/", controller.overview);
+router.patch("/settings", controller.updateSettings);
+router.post("/send", controller.sendToMember);
+router.post("/test", controller.sendTest);
+export default router;

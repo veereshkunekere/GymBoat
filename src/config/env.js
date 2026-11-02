@@ -91,5 +91,12 @@ export const env = Object.freeze({
     process.env.JWT_COOKIE_NAME || "gym_token",
 
   COOKIE_SECURE,
-  COOKIE_SAME_SITE
+  COOKIE_SAME_SITE,
+
+  // Optional Meta WhatsApp Cloud API configuration
+  WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || "",
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || "",
+  WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN || "",
+  WHATSAPP_API_VERSION: process.env.WHATSAPP_API_VERSION || "v23.0",
+  WHATSAPP_TEMPLATE_LANGUAGE: process.env.WHATSAPP_TEMPLATE_LANGUAGE || "en_US"
 });

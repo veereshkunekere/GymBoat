@@ -33,7 +33,9 @@ export const addMember = async (ownerId, data) => {
     gender: data.gender || "OTHER",
     address: data.address || "",
     dateOfBirth: data.dateOfBirth || undefined,
-    joinedAt: data.joinedAt || new Date()
+    joinedAt: data.joinedAt || new Date(),
+    whatsappOptIn: data.whatsappOptIn === true,
+    whatsappConsentAt: data.whatsappOptIn === true ? new Date() : null
   });
 
   return member;
@@ -167,7 +169,8 @@ export const updateMember = async (ownerId, memberId, data) => {
     "gender",
     "address",
     "dateOfBirth",
-    "joinedAt"
+    "joinedAt",
+    "whatsappOptIn"
   ];
 
   const updates = {};
@@ -188,6 +191,11 @@ export const updateMember = async (ownerId, memberId, data) => {
 
   if (updates.email !== undefined) {
     updates.email = updates.email?.toLowerCase() || null;
+  }
+
+  if (updates.whatsappOptIn !== undefined) {
+    updates.whatsappOptIn = updates.whatsappOptIn === true;
+    updates.whatsappConsentAt = updates.whatsappOptIn ? new Date() : null;
   }
 
   const member = await Member.findOneAndUpdate(

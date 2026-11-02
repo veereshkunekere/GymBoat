@@ -2,12 +2,14 @@ import app from "./app.js";
 import connectDB from "./config/database.js";
 import { env } from "./config/env.js";
 import { startMembershipExpiryJob} from "./jobs/membershipExpiry.job.js";
+import { startWhatsAppReminderJob } from "./jobs/whatsappReminder.job.js";
 const startServer = async () => {
   try {
     // Connect database first
     await connectDB();
 
     await startMembershipExpiryJob();
+    const whatsappTask = startWhatsAppReminderJob();
 
     // Start Express
     const server = app.listen(env.PORT, () => {
@@ -28,6 +30,7 @@ const startServer = async () => {
     const shutdown = (signal) => {
       console.log(`${signal} received. Shutting down...`);
 
+      whatsappTask.stop();
       server.close(async () => {
         const mongoose = await import("mongoose");
         await mongoose.default.connection.close();

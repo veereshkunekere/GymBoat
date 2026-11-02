@@ -39,6 +39,12 @@ const gymSchema = new mongoose.Schema(
       default: true
     },
 
+    whatsappNotifications: {
+      enabled: { type: Boolean, default: false },
+      expiryReminders: { type: Boolean, default: true },
+      reminderDays: { type: [Number], default: [7, 3, 1] },
+    },
+
     currency: {
       type: String,
       default: "INR"

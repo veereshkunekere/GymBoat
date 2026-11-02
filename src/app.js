@@ -14,6 +14,7 @@ import planRoutes from "./modules/plans/plan.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
 import importRoutes from "./modules/imports/import.routes.js";
 import reportRoutes from "./modules/reports/report.routes.js";
+import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
 
 import {
   notFound,
@@ -50,6 +51,7 @@ app.use(`${API_V1}/plans`, planRoutes);
 app.use(`${API_V1}/payments`, paymentRoutes);
 app.use(`${API_V1}/imports`, importRoutes);
 app.use(`${API_V1}/reports`, reportRoutes);
+app.use(`${API_V1}/whatsapp`, whatsappRoutes);
 // Root endpoint
 app.get("/api", (req, res) => {
   res.json({
